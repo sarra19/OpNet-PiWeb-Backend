@@ -20,6 +20,10 @@ router.get('/:FirstName/:LastName/:Email', function(req,res){
 //postman
 router.post("/add",userController.add);
 router.post("/login", userController.login)
+router.post("/googlelogin",userController.googlelogin);
+
+router.get("/profile/:id", userController.profile)
+
 router.get('/getall' ,userController.getall);
 router.get('/get/:id' ,userController.getbyid);
 
@@ -28,4 +32,5 @@ router.put('/updateUser/:id', userController.UpdateUser);
 
 router.delete('/deleteUser/:id',userController.deleteUser);
 
+  
 module.exports = router ;
