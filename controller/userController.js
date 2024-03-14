@@ -25,6 +25,7 @@ async function googlelogin (req, res) {
   
       // Par exemple :
       const googleUser = await fetchUserInfoFromGoogle(access_token);
+      
       let user = await User.findOne({ email: googleUser.email });
       if (!user) {
         user = new User({ email: googleUser.email, password:googleUser.password });
@@ -46,6 +47,7 @@ async function googlelogin (req, res) {
   // Autres routes et fonctions du contrôleur utilisateur...
   
   async function login(req, res) {
+    console.log(req.sessionID);
     const { email, password } = req.body;
 
     try {
@@ -66,7 +68,7 @@ async function googlelogin (req, res) {
         // Générer un jeton JWT et inclure le rôle de l'utilisateur dans la payload
         const token = jwt.sign({ userId: user._id, userRole: user.role }, "secretKey", { expiresIn: "1h" });
 
-        let redirectUrl = "/dashboard";
+        let redirectUrl = "/dashboard/Admin";
 
         res.status(200).json({ token, redirectUrl, userRole: user.role ,userId: user._id, }); // Inclure le rôle dans la réponse
     } catch (error) {
@@ -75,7 +77,21 @@ async function googlelogin (req, res) {
 }
 
 
-
+async function storeUserRole(req, res) {
+    try {
+      const { userRole } = req.body;
+      // Store userRole wherever appropriate, such as in your database
+      // For example, if you have a User model, you can save it there
+      // const user = new User({ role: userRole });
+      // await user.save();
+  
+      // Respond with success status
+      res.status(200).json({ message: "UserRole stored successfully." });
+    } catch (error) {
+      console.error("Error storing UserRole:", error);
+      res.status(500).json({ message: "An error occurred while storing UserRole." });
+    }
+  }
 
 async function sendConfirmationEmail(email) {
     console.log(email);
@@ -131,53 +147,64 @@ async function profile(req, res) {
 }
 
 
-async function add(req, res) {
-    try {
-        // Récupérer l'email et le mot de passe à partir du corps de la requête
-        const { email, password, firstname, lastname, dateOfBirth, country, phone, speciality, institution, languages, profileImage, description, skills, experience, formation, certificates, cV,role } = req.body;
+// async function add(req, res) {
+//     try {
+//         const { email, password, firstname, lastname, dateOfBirth, country, phone, speciality, institution, languages, profileImage, description, skills, experience, formation, certificates, cV, role } = req.body;
 
-        // Vérifier si l'e-mail existe déjà
-        const existingUser = await User.findOne({ email });
+//         // Vérifier si l'utilisateur existe déjà avec cet e-mail
+//         const existingUser = await User.findOne({ email });
 
-        if (existingUser) {
-            return res.status(400).send({ error: "This email is already registered" });
-        }
+//         if (existingUser) {
+//             return res.status(409).send({ error: "User with given email already exists" });
+//         }
 
-        // Hacher le mot de passe
-        const hashedPassword = await bcrypt.hash(password, 10); // 10 est le coût de hachage
+//         // Générer un sel et hacher le mot de passe
+//         const salt = await bcrypt.genSalt(Number(process.env.SALT));
+//         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Créer un nouvel utilisateur avec le mot de passe haché
-        const user = new User({ 
-            email, 
-            password: hashedPassword, 
-            firstname, 
-            lastname, 
-            dateOfBirth, 
-            country, 
-            phone, 
-            speciality, 
-            institution, 
-            languages, 
-            profileImage, 
-            description, 
-            skills, 
-            experience, 
-            formation, 
-            certificates, 
-            cV ,
-            role
-        });
-        // Sauvegarder l'utilisateur dans la base de données
-        await user.save();
-        await sendConfirmationEmail(email);
+//         // Créer un nouvel utilisateur avec le mot de passe haché
+//         const user = new User({
+//             email,
+//             password: hashedPassword,
+//             firstname,
+//             lastname,
+//             dateOfBirth,
+//             country,
+//             phone,
+//             speciality,
+//             institution,
+//             languages,
+//             profileImage,
+//             description,
+//             skills,
+//             experience,
+//             formation,
+//             certificates,
+//             cV,
+//             role
+//         });
 
-        // Envoyer une réponse de réussite à l'utilisateur
-        res.status(200).send("Inscription réussie.");
-    } catch (err) {
-        // Gérer les erreurs et renvoyer une réponse d'erreur au client
-        res.status(400).send({ error: err });
-    }
-}
+//         // Sauvegarder l'utilisateur dans la base de données
+//         await user.save();
+
+//         // Générer un jeton de vérification
+//         const token = await new Token({
+//             userId: user._id,
+//             token: crypto.randomBytes(32).toString("hex"),
+//         }).save();
+
+//         // Construire l'URL de vérification et envoyer l'e-mail de confirmation
+//         const url = `${process.env.BASE_URL}user/${user.id}/verify/${token.token}`;
+//         await sendConfirmationEmail(email);
+
+//         // Envoyer une réponse de réussite à l'utilisateur
+//         res.status(200).send("Inscription réussie. Un e-mail de vérification a été envoyé.");
+//     } catch (err) {
+//         // Gérer les erreurs et renvoyer une réponse d'erreur au client
+//         console.error(err);
+//         res.status(500).send({ error: "Internal Server Error" });
+//     }
+// }
 
 
 async function getbyid (req,res){
@@ -219,4 +246,4 @@ async function deleteUser (req, res) {
         res.status(500).json(err);
     }
 }
-module.exports={getall ,googlelogin, getbyid, getbyname,profile, login,add , UpdateUser ,deleteUser}
+module.exports={getall ,googlelogin,storeUserRole, getbyid, getbyname,profile, login , UpdateUser ,deleteUser}
